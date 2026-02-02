@@ -36,7 +36,6 @@ public class UserServiceImplTest {
     private UserRepository userRepository;
 
     // test login() method
-
     // user successfully login into his/her account
     @Test
     void testLogin_Successful() {
@@ -142,19 +141,14 @@ public class UserServiceImplTest {
         when(passwordEncoder.encode(password))
                 .thenReturn("encoded123456");
 
-        // --- Act (执行) ---
         String result = userService.register(registerDto);
 
-        // --- Assert (验证返回值) ---
         assertEquals("User registered successfully", result);
 
-        // --- Verify (验证行为) ---
-        // 验证: userRepository.save() 被调用了一次，且参数是任意 User 类
         verify(userRepository, times(1)).save(any(User.class));
     }
 
     // Username exists
-
     @Test
     void testRegister_UsernameAlreadyExists_ThrowException() {
         String username = "test";
@@ -176,7 +170,6 @@ public class UserServiceImplTest {
     }
 
     //email exists
-
     @Test
     void testRegister_EmailAlreadyExists_ThrowException() {
         String username = "test";
@@ -202,7 +195,6 @@ public class UserServiceImplTest {
     }
 
     // test updateUser() method
-
     // update successfully
     @Test
     void testUpdateUser_Successful() {
@@ -220,15 +212,12 @@ public class UserServiceImplTest {
         updateInfo.setFullName(newFullName);
         updateInfo.setEmail(newEmail);
 
-        //成功找到老用户
         when(userRepository.findById(id))
                 .thenReturn(Optional.of(existingUser));
 
-        //模拟新邮箱是否有人占用
         when(userRepository.existsByEmail(newEmail))
                 .thenReturn(false);
 
-        //模拟save()
         when(userRepository.save(any(User.class)))
                 .thenReturn(existingUser);
 
@@ -246,103 +235,72 @@ public class UserServiceImplTest {
 
     @Test
     void testUpdateUser_UserNotFound_ThrowException() {
-        // --- 1. Arrange (准备道具) ---
         Long nonExistentId = 999L;
 
-        // 随便准备一个 User 对象充当参数，反正进去第一行就报错，这个对象里的数据根本没机会被用到
         User updateInfo = new User();
         updateInfo.setFullName("Ghost");
 
-        // 🎭 导演安排：
-        // 当 Service 去查 ID 为 999 的人时，Repository 递给它一个“空盒子” (Optional.empty)
         when(userRepository.findById(nonExistentId))
                 .thenReturn(Optional.empty());
 
-        // --- 2. Act & Assert (开拍 & 验收) ---
-        // 验证：调用方法时必须抛出 RuntimeException
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> userService.updateUser(nonExistentId, updateInfo));
 
-        // 验证：报错口供必须一致
         assertEquals("User does not exist", exception.getMessage());
 
-        // --- 3. Verify (防守验证) ---
-        // 验证：Repository 的 save 方法绝对没有被调用过
-        // (防止代码逻辑写错，没找到人还瞎保存空对象)
         verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
     void testUpdateUser_EmailAlreadyExists_ThrowException() {
-        // --- 1. Arrange (准备) ---
         Long id = 1L;
         String takenEmail = "taken@test.com";
 
-        // A. 准备数据库里的“老用户” (注意：他的邮箱必须和要改的邮箱不一样)
         User existingUser = new User();
         existingUser.setId(id);
         existingUser.setUsername("currentUser");
-        existingUser.setEmail("original@test.com"); // 旧邮箱
+        existingUser.setEmail("original@test.com");
 
-        // B. 准备想改成的“新数据”
         User updateInfo = new User();
-        updateInfo.setEmail(takenEmail); // 想改成这个已被占用的邮箱
+        updateInfo.setEmail(takenEmail);
 
-        // C. Mock (导演剧本)
-        // 1. 先让 Service 找到当前用户 (不然第一步就挂了)
         when(userRepository.findById(id)).thenReturn(Optional.of(existingUser));
 
-        // 2. 关键冲突点：告诉 Service 这个新邮箱已经有人用了
         when(userRepository.existsByEmail(takenEmail)).thenReturn(true);
 
-        // --- 2. Act & Assert (执行 & 验收) ---
-        // 验证：必须抛出 RuntimeException
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> userService.updateUser(id, updateInfo));
 
-        // 验证：错误信息必须准确
         assertEquals("Email is already in use", exception.getMessage());
 
-        // --- 3. Verify (防守验证) ---
-        // 验证：save 方法绝对没被调用 (防止脏数据入库)
         verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
     void testDeleteUser_Successful() {
-        // --- 1. Arrange (准备) ---
         Long userId = 1L;
         User existingUser = new User();
         existingUser.setId(userId);
         existingUser.setUsername("userToDelete");
 
-        // Mock: 先查到这个人
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
 
-        // --- 2. Act (执行) ---
         userService.deleteUser(userId);
 
-        // --- 3. Verify (验证) ---
-        // 关键：验证 delete 方法被调用了，而且删的就是我们查出来的那个 existingUser
         verify(userRepository, times(1)).delete(existingUser);
     }
 
     @Test
     void testDeleteUser_UserNotFound_ThrowException() {
-        // --- 1. Arrange (准备) ---
         Long nonExistentId = 999L;
 
-        // Mock: 查不到人
         when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        // --- 2. Act & Assert (执行 & 验证异常) ---
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> userService.deleteUser(nonExistentId));
 
         assertEquals("User does not exist", exception.getMessage());
 
-        // --- 3. Verify (防守验证) ---
-        // 关键：因为没找到人，所以 delete 方法绝对不能被执行
         verify(userRepository, never()).delete(any(User.class));
     }
 }

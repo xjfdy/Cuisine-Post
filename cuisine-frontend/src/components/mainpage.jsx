@@ -16,7 +16,6 @@ const Mainpage = () => {
     const currentUser = AuthService.getCurrentUser();
     const navigator = useNavigate();
 
-    // 当页码或页面大小变化时自动刷新
     useEffect(() => {
         getAllPost();
     }, [pageNo, pageSize]) 

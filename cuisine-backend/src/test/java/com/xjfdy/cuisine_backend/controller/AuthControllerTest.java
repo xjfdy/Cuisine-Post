@@ -21,70 +21,58 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(AuthController.class) // 1. 只测试 AuthController
-@AutoConfigureMockMvc(addFilters = false) // 2. 暂时关掉 Security 过滤器，防止测试被 403 拦截
+@WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
     @Autowired
-    private MockMvc mockMvc; // 模拟发请求的工具 (就像代码版的 Postman)
+    private MockMvc mockMvc;
 
-    @MockitoBean // 3. 模拟 Service，不要真的去连数据库
+    @MockitoBean
     private UserService userService;
 
-    @MockitoBean // 模拟 JwtTokenProvider
+    @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
     @Autowired
-    private ObjectMapper objectMapper; // 用于把对象转成 JSON 字符串
+    private ObjectMapper objectMapper;
 
-    // --- 1. 测试登录成功 (200 OK) ---
     @Test
     void login_Success() throws Exception {
-        // Arrange
         LoginDto loginDto = new LoginDto();
         loginDto.setUsernameOrEmail("testuser");
         loginDto.setPassword("password");
 
         AuthResponseDto mockResponse = new AuthResponseDto("fake-token", 1L, "testuser", "test@email.com", "Test User");
 
-        // 告诉 Mockito：当调用 service.login 时，返回成功的 response
         when(userService.login(any(LoginDto.class))).thenReturn(mockResponse);
 
-        // Act & Assert
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginDto))) // 把 DTO 转成 JSON 发送
-                .andExpect(status().isOk()) // 期待 200
-                // {"token":"fake-token","type":"Bearer","id":1,"username":"testuser",...}
-                // 因为json的字段名就叫token，所以jsonPath不能用accessToken
-                .andExpect(jsonPath("$.token").value("fake-token")) // 验证返回的 JSON 里有 token
+                        .content(objectMapper.writeValueAsString(loginDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("fake-token"))
                 .andExpect(jsonPath("$.username").value("testuser"));
     }
 
-    // --- 2. 测试登录失败 (401 Unauthorized) ---
     @Test
     void login_Fail_WrongPassword() throws Exception {
-        // Arrange
         LoginDto loginDto = new LoginDto();
         loginDto.setUsernameOrEmail("testuser");
         loginDto.setPassword("wrong-password");
 
-        // 模拟 Service 抛出异常 (模仿 UserServiceImpl 里的逻辑)
         when(userService.login(any(LoginDto.class)))
                 .thenThrow(new RuntimeException("Wrong password"));
 
-        // Act & Assert
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginDto)))
-                .andExpect(status().isUnauthorized()) // 期待 401
-                .andExpect(jsonPath("$.message").value("Wrong password")); // 验证错误信息
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Wrong password"));
     }
 
-    // --- 3. 测试注册成功 (201 Created) ---
     @Test
     void register_Success() throws Exception {
-        // Arrange
         RegisterDto registerDto = new RegisterDto();
         registerDto.setUsername("newuser");
         registerDto.setEmail("new@test.com");
@@ -92,7 +80,6 @@ class AuthControllerTest {
 
         when(userService.register(any(RegisterDto.class))).thenReturn("User registered successfully");
 
-        // Act & Assert
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerDto)))
@@ -100,17 +87,14 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.message").value("User registered successfully"));
     }
 
-    // --- 4. 测试注册失败 - 用户名已存在 (400 Bad Request) ---
     @Test
     void register_Fail_UsernameTaken() throws Exception {
-        // Arrange
         RegisterDto registerDto = new RegisterDto();
         registerDto.setUsername("existing");
 
         when(userService.register(any(RegisterDto.class)))
                 .thenThrow(new RuntimeException("Username is already in use"));
 
-        // Act & Assert
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerDto)))
@@ -118,10 +102,8 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.message").value("Username is already in use"));
     }
 
-    // --- 5. 测试获取当前用户 /me (200 OK) ---
     @Test
     void getCurrentUser_Success() throws Exception {
-        // Arrange
         String token = "Bearer fake-valid-token";
         String pureToken = "fake-valid-token";
         String username = "testuser";
@@ -130,11 +112,9 @@ class AuthControllerTest {
         mockUser.setUsername(username);
         mockUser.setEmail("test@email.com");
 
-        // 模拟解析 Token 的过程
         when(jwtTokenProvider.getUsername(pureToken)).thenReturn(username);
         when(userService.getUserByUsername(username)).thenReturn(mockUser);
 
-        // Act & Assert
         mockMvc.perform(get("/api/auth/me")
                         .header("Authorization", token)) // 模拟带 Header 请求
                 .andExpect(status().isOk())
@@ -142,16 +122,12 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.email").value("test@email.com"));
     }
 
-    // --- 6. 测试获取当前用户 - Token 无效 (401 Unauthorized) ---
     @Test
     void getCurrentUser_Fail_InvalidToken() throws Exception {
-        // Arrange
         String token = "Bearer invalid-token";
 
-        // 模拟 Token 解析报错
         when(jwtTokenProvider.getUsername(any())).thenThrow(new RuntimeException("Invalid token"));
 
-        // Act & Assert
         mockMvc.perform(get("/api/auth/me")
                         .header("Authorization", token))
                 .andExpect(status().isUnauthorized()) // 期待 401
