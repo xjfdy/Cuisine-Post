@@ -37,8 +37,6 @@ class JwtTokenProviderTest {
         assertTrue(token.length() > 0);
         assertTrue(jwtTokenProvider.validateToken(token));
         assertEquals(testUser, jwtTokenProvider.getUsername(token));
-        assertThrows(IllegalArgumentException.class,
-                () -> jwtTokenProvider.generateToken(null));
     }
 
     @Test

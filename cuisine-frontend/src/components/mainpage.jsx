@@ -21,6 +21,9 @@ const Mainpage = () => {
     }, [pageNo, pageSize]) 
 
     function getAllPost() {
+        
+        console.log(`Here: ${import.meta.env.VITE_API_URL}`);
+
         allPost(pageNo, pageSize, searchQuery).then((response) => {
             console.log("Response data from backend:", response.data);
             

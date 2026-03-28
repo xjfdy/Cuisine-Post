@@ -3,7 +3,7 @@ import AuthService from "./AuthService"
 // ./ means current directory
 // ../ means previous directory
 
-const API_BASE_URL = 'http://localhost:8080/api/post';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api/post`;
 
 // Get all post
 export const allPost = (pageNo = 0, pageSize = 5, query = '') => {

@@ -1,0 +1,9 @@
+$env:DATASOURCE_URL="jdbc:mysql://localhost:3306/cuisine"
+$env:DATASOURCE_USER="root"
+$env:DATASOURCE_PASSWORD="root"
+
+postgresql://neondb_owner:npg_vRBGt25rPlWc@ep-twilight-violet-aiayul2n-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+DATASOURCE_URL=ep-twilight-violet-aiayul2n-pooler.c-4.us-east-1.aws.neon.tech/neondb
+DATASOURCE_USER=neondb_owner
+DATASOURCE_PASSWORD=npg_vRBGt25rPlWc
+FRONTEND_URP=http://localhost:3000
