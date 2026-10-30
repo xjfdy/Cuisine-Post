@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const ImageUpload = ({ onUploadSuccess, currentImageUrl }) => {
     const [uploading, setUploading] = useState(false);
     const [preview, setPreview] = useState(currentImageUrl || '');
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        setPreview(currentImageUrl || '');
+    }, [currentImageUrl]);
 
     const handleFileChange = async (e) => {
         const file = e.target.files[0];

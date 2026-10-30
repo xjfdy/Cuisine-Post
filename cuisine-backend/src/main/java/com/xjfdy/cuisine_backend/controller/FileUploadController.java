@@ -13,49 +13,56 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Locale;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/upload")
 @CrossOrigin(origins = "*")
 public class FileUploadController {
 
-    // 图片保存路径（在项目根目录下的 uploads 文件夹）
+    // save path
     private static final String UPLOAD_DIR = "uploads/images/";
+    // Content-Type is sent by the client and can be faked -> whitelist
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp");
 
     @PostMapping("/image")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
-            // 验证文件是否为空
+            // check whether file is empty
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest()
                         .body(createErrorResponse("Please select a file to upload"));
             }
 
-            // 验证文件类型
+            // validate file type
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity.badRequest()
                         .body(createErrorResponse("Only image files are allowed"));
             }
 
-            // 验证文件大小（限制为 5MB）
+            // validate the size of file
             if (file.getSize() > 5 * 1024 * 1024) {
                 return ResponseEntity.badRequest()
                         .body(createErrorResponse("File size must be less than 5MB"));
             }
 
-            // 创建上传目录（如果不存在）
+            // create upload directory if not exists
             Path uploadPath = Paths.get(UPLOAD_DIR);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
 
-            // 生成唯一文件名
-            String originalFilename = file.getOriginalFilename();
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            // validate extension
+            String fileExtension = getExtension(file.getOriginalFilename());
+            if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
+                return ResponseEntity.badRequest()
+                        .body(createErrorResponse("Only JPG, PNG, GIF or WEBP images are allowed"));
+            }
             String newFilename = UUID.randomUUID().toString() + fileExtension;
 
-            // 保存文件
+            // save the file
             Path filePath = uploadPath.resolve(newFilename);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -73,6 +80,15 @@ public class FileUploadController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Failed to upload image: " + e.getMessage()));
         }
+    }
+
+    // "photo.JPG" -> ".jpg", "photo" or null -> ""
+    private String getExtension(String filename) {
+        if (filename == null) {
+            return "";
+        }
+        int dotIndex = filename.lastIndexOf('.');
+        return dotIndex < 0 ? "" : filename.substring(dotIndex).toLowerCase(Locale.ROOT);
     }
 
     private Map<String, String> createErrorResponse(String message) {

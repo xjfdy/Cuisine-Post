@@ -1,0 +1,45 @@
+### Upload a PNG -> 200, saves imageUrl (used by create-post.http)
+POST http://localhost:8080/api/upload/image
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="sample.png"
+Content-Type: image/png
+
+< ./sample.png
+--boundary--
+
+> {% client.global.set("imageUrl", response.body.imageUrl); %}
+
+### File without an extension -> 400
+POST http://localhost:8080/api/upload/image
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="photo"
+Content-Type: image/png
+
+not really an image
+--boundary--
+
+### SVG is rejected (can contain scripts -> XSS) -> 400
+POST http://localhost:8080/api/upload/image
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="evil.svg"
+Content-Type: image/svg+xml
+
+<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>
+--boundary--
+
+### Not an image -> 400
+POST http://localhost:8080/api/upload/image
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="notes.txt"
+Content-Type: text/plain
+
+hello
+--boundary--

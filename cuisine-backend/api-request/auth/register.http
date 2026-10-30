@@ -1,0 +1,32 @@
+### Register demo user A (400 "Username is already in use" if it already exists)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "chef_anna",
+  "email": "chef.anna@cuisine.test",
+  "password": "Demo-Pass-2026",
+  "fullName": "Anna Chef"
+}
+
+### Register demo user B (used to show 403 on someone else's post)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "chef_ben",
+  "email": "chef.ben@cuisine.test",
+  "password": "Demo-Pass-2026",
+  "fullName": "Ben Chef"
+}
+
+### Duplicate username -> 400
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "chef_anna",
+  "email": "another.anna@cuisine.test",
+  "password": "Demo-Pass-2026",
+  "fullName": "Another Anna"
+}

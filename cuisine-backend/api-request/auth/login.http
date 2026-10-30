@@ -1,0 +1,39 @@
+### Login user A -> saves annaToken
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "chef_anna",
+  "password": "Demo-Pass-2026"
+}
+
+> {% client.global.set("annaToken", response.body.token); %}
+
+### Login user B with email -> saves benToken
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "chef.ben@cuisine.test",
+  "password": "Demo-Pass-2026"
+}
+
+> {% client.global.set("benToken", response.body.token); %}
+
+### Wrong password -> 401
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "chef_anna",
+  "password": "WrongPassword"
+}
+
+### Unknown user -> 401 (same message as wrong password, no user enumeration)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "nobody_here",
+  "password": "WrongPassword"
+}

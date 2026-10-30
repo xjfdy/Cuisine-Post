@@ -1,0 +1,15 @@
+### Current user -> 200 (check: no "password" field in the response)
+GET http://localhost:8080/api/auth/me
+Authorization: Bearer {{annaToken}}
+
+### Fake token -> 401
+GET http://localhost:8080/api/auth/me
+Authorization: Bearer abc.def.ghi
+
+### Validate token -> 200 "Valid token"
+GET http://localhost:8080/api/auth/validate
+Authorization: Bearer {{annaToken}}
+
+### Validate fake token -> 401
+GET http://localhost:8080/api/auth/validate
+Authorization: Bearer abc.def.ghi

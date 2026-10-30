@@ -11,7 +11,7 @@ const Register = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const navigate = useNavigate();
+    const navigate = useNavigate(); // redirect to another page after successful registration
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -36,7 +36,7 @@ const Register = () => {
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed, please try again');
         } finally {
-            setLoading(false);
+            setLoading(false); // used to disable the register button
         }
     };
 

@@ -29,10 +29,10 @@ public class UserServiceImpl implements UserService {
     public AuthResponseDto login(LoginDto loginDto) {
         User user = userRepository.findByUsername(loginDto.getUsernameOrEmail())
                 .orElseGet(() -> userRepository.findByEmail(loginDto.getUsernameOrEmail())
-                        .orElseThrow(() -> new RuntimeException("Username or Email does not exist")));
+                        .orElseThrow(() -> new RuntimeException("Invalid username or password")));
 
         if (!passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Wrong password");
+            throw new RuntimeException("Invalid username or password");
         }
 
         String token = jwtTokenProvider.generateToken(user.getUsername());
@@ -62,7 +62,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserByUsername(String username) {
-
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User does not exist"));
     }

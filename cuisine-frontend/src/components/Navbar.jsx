@@ -27,10 +27,6 @@ const Navbar = () => {
                             <Link to='/' className='nav-link'>
                                 🏠 Home
                             </Link>
-                            
-                            <Link to='/add-post' className='nav-link'>
-                                ✏️ Compose
-                            </Link>
 
                             <div className='user-menu'>
                                 <span className='user-name'>

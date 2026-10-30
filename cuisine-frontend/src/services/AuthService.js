@@ -30,8 +30,6 @@ class AuthService {
         return response.data;
     }
     
-    // function logout() incorrect，cannot use function within a class
-    // function means global function
     logout() {
         localStorage.removeItem('user');
     }
@@ -55,6 +53,12 @@ class AuthService {
 
     isLoggedIn() {
         return this.getCurrentUser() !== null;
+    }
+
+    handleSessionExpired() {
+        alert('Your session has expired. Please login again.');
+        this.logout();
+        window.location.href = '/login'; // full reload so the Navbar updates too
     }
 
     getAuthHeader() {

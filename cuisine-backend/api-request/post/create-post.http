@@ -1,0 +1,41 @@
+### Create as user A -> 201, saves postId
+POST http://localhost:8080/api/post
+Authorization: Bearer {{annaToken}}
+Content-Type: application/json
+
+{
+  "title": "Butter Chicken",
+  "body": "Marinate the chicken in yogurt and spices, then simmer in a tomato butter sauce.",
+  "imageUrl": "{{imageUrl}}"
+}
+
+> {% client.global.set("postId", response.body.postId); %}
+
+### No token -> 401 "Please login first"
+POST http://localhost:8080/api/post
+Content-Type: application/json
+
+{
+  "title": "Should fail",
+  "body": "No token"
+}
+
+### Fake token -> 401 "Your session has expired, please login again"
+POST http://localhost:8080/api/post
+Authorization: Bearer abc.def.ghi
+Content-Type: application/json
+
+{
+  "title": "Should fail",
+  "body": "Fake token"
+}
+
+### Empty title -> 400 (backend validation, even if the frontend is bypassed)
+POST http://localhost:8080/api/post
+Authorization: Bearer {{annaToken}}
+Content-Type: application/json
+
+{
+  "title": "   ",
+  "body": "Title is blank"
+}

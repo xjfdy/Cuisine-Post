@@ -1,5 +1,6 @@
 package com.xjfdy.cuisine_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -99,7 +100,6 @@ public class User {
                 "id=" + id +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
                 ", fullName='" + fullName + '\'' +
                 ", createdAt=" + createdAt +
                 '}';

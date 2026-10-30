@@ -1,8 +1,7 @@
 package com.xjfdy.cuisine_backend.service;
 
 import com.xjfdy.cuisine_backend.dto.PostDto;
-
-import java.util.List;
+import com.xjfdy.cuisine_backend.dto.PostPageResponse;
 
 public interface PostService {
 
@@ -10,7 +9,7 @@ public interface PostService {
 
     PostDto getPostById(Long id);
 
-    List<PostDto> getAllPosts();
+    PostPageResponse getPosts(int pageNo, int pageSize, String query);
 
     PostDto updatePost(Long id, PostDto postDto, String username);
 

@@ -1,0 +1,30 @@
+### User B edits user A's post -> 403
+PUT http://localhost:8080/api/post/{{postId}}
+Authorization: Bearer {{benToken}}
+Content-Type: application/json
+
+{
+  "title": "Hacked title",
+  "body": "Ben should not be able to do this."
+}
+
+### User A edits own post -> 200
+PUT http://localhost:8080/api/post/{{postId}}
+Authorization: Bearer {{annaToken}}
+Content-Type: application/json
+
+{
+  "title": "Butter Chicken (Updated)",
+  "body": "Added a splash of cream at the end.",
+  "imageUrl": "{{imageUrl}}"
+}
+
+### Post doesn't exist -> 404
+PUT http://localhost:8080/api/post/999999
+Authorization: Bearer {{annaToken}}
+Content-Type: application/json
+
+{
+  "title": "Ghost post",
+  "body": "Does not exist"
+}

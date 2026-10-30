@@ -6,14 +6,17 @@ import AuthService from "./AuthService"
 const API_BASE_URL = 'http://localhost:8080/api/post';
 
 // Get all post
-export const allPost = () => axios.get(API_BASE_URL);
+export const allPost = (pageNo = 0, pageSize = 10, query = '') => {
+    return axios.get(API_BASE_URL, {
+        params: { pageNo, pageSize, query }
+    });
+}
 
 // create a new Post
 export const createPost = (post) => {
 
     const headers = AuthService.getAuthHeader();
-    console.log('Creating post with headers:', headers); // 🔍 添加这行
-    console.log('Post data:', post); // 🔍 调试信息
+    console.log('Post data:', post); 
 
     return axios.post(API_BASE_URL, post, {
         headers: headers
@@ -22,13 +25,13 @@ export const createPost = (post) => {
 // Arrow function wont be hoist
 // hoist example;
 
-// foo(); // ✅ foo() can be invoked
+// foo(); // foo() can be invoked
 // function foo() {
 //     console.log("Hello");
 // }
 
 // Temporal Dead Zone
-// bar(); // ❌ will get an error: bar is not a function
+// bar(); // will get an error: bar is not a function
 // const bar = () => {
 //     console.log("World");
 // }
@@ -39,8 +42,7 @@ export const getPost = (postId) => axios.get(API_BASE_URL + '/' + postId);
 // Update a Post
 export const updatePost = (postId, post) => {
 
-     const headers = AuthService.getAuthHeader();
-    console.log('Updating post with headers:', headers);
+    const headers = AuthService.getAuthHeader();
 
     return axios.put(API_BASE_URL + '/' + postId, post, {
         headers: headers
@@ -51,7 +53,6 @@ export const updatePost = (postId, post) => {
 export const deletePost = (postId) => {
 
     const headers = AuthService.getAuthHeader();
-    console.log('Deleting post with headers:', headers);
 
     return axios.delete(API_BASE_URL + '/' + postId, {
         headers: headers

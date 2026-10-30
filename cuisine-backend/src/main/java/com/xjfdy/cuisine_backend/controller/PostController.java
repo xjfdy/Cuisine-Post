@@ -1,135 +1,80 @@
 package com.xjfdy.cuisine_backend.controller;
 
 import com.xjfdy.cuisine_backend.dto.PostDto;
+import com.xjfdy.cuisine_backend.dto.PostPageResponse;
+import com.xjfdy.cuisine_backend.dto.userDto.MessageResponseDto;
+import com.xjfdy.cuisine_backend.exception.UnauthorizedException;
 import com.xjfdy.cuisine_backend.security.JwtTokenProvider;
 import com.xjfdy.cuisine_backend.service.PostService;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @CrossOrigin("*")
 @RestController
 @RequestMapping("/api/post")
 public class PostController {
 
-    private PostService postService;
+    private final PostService postService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
-
-    public PostController(PostService postService) {
+    public PostController(PostService postService, JwtTokenProvider jwtTokenProvider) {
         this.postService = postService;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
-//    @PostMapping
-//    public ResponseEntity<PostDto> createPost(@RequestBody PostDto postDto) {
-//        PostDto newPost =postService.createPost(postDto);
-//        return new ResponseEntity<>(newPost, HttpStatus.CREATED);
-//    }
-
+    // GET /api/post?pageNo=0&pageSize=5&query=poutine
     @GetMapping
-    public ResponseEntity<List<PostDto>> getPosts() {
-        List<PostDto> posts = postService.getAllPosts();
-        return ResponseEntity.ok(posts);
+    public ResponseEntity<PostPageResponse> getPosts(
+            @RequestParam(name = "pageNo", defaultValue = "0") int pageNo,
+            @RequestParam(name = "pageSize", defaultValue = "10") int pageSize,
+            @RequestParam(name = "query", defaultValue = "") String query) {
+        return ResponseEntity.ok(postService.getPosts(pageNo, pageSize, query));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PostDto> getPost(@PathVariable("id") Long id) {
-        PostDto postDto = postService.getPostById(id);
-        return ResponseEntity.ok(postDto);
+        return ResponseEntity.ok(postService.getPostById(id));
     }
 
     @PostMapping
-    public ResponseEntity<?> createPost(
+    public ResponseEntity<PostDto> createPost(
             @RequestBody PostDto postDto,
-            @RequestHeader(value = "Authorization", required = false) String token) {
-
-        try {
-            if (token == null || !token.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(createErrorResponse("Please login to create a post"));
-            }
-
-            String jwt = token.substring(7);
-            String username = jwtTokenProvider.getUsername(jwt);
-
-            PostDto newPost = postService.createPost(postDto, username);
-            return new ResponseEntity<>(newPost, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse("Invalid token or authentication failed"));
-        }
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String username = getUsernameFromToken(authHeader);
+        PostDto newPost = postService.createPost(postDto, username);
+        return new ResponseEntity<>(newPost, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePost(
+    public ResponseEntity<PostDto> updatePost(
             @PathVariable("id") Long id,
             @RequestBody PostDto postDto,
-            @RequestHeader(value = "Authorization", required = false) String token) {
-
-        try {
-            if (token == null || !token.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(createErrorResponse("Please login to update a post"));
-            }
-
-            String jwt = token.substring(7);
-            String username = jwtTokenProvider.getUsername(jwt);
-
-            PostDto updatedPost = postService.updatePost(id, postDto, username);
-            return ResponseEntity.ok(updatedPost);
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("permission")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(createErrorResponse(e.getMessage()));
-            }
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(createErrorResponse(e.getMessage()));
-        }
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String username = getUsernameFromToken(authHeader);
+        return ResponseEntity.ok(postService.updatePost(id, postDto, username));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePost(
+    public ResponseEntity<MessageResponseDto> deletePost(
             @PathVariable("id") Long id,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String username = getUsernameFromToken(authHeader);
+        postService.deletePost(id, username);
+        return ResponseEntity.ok(new MessageResponseDto("Post deleted successfully"));
+    }
 
-        try {
-            if (token == null || !token.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(createErrorResponse("Please login to delete a post"));
-            }
-
-            String jwt = token.substring(7);
-            String username = jwtTokenProvider.getUsername(jwt);
-
-            postService.deletePost(id, username);
-            return ResponseEntity.ok(createSuccessResponse("Post deleted successfully"));
-
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("permission")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(createErrorResponse(e.getMessage()));
-            }
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(createErrorResponse(e.getMessage()));
+    // Errors are no longer caught here: GlobalExceptionHandler maps them to 400/401/403/404
+    private String getUsernameFromToken(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new UnauthorizedException("Please login first");
         }
-    }
-
-
-    private Map<String, String> createErrorResponse(String message) {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", message);
-        return response;
-    }
-
-    private Map<String, String> createSuccessResponse(String message) {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", message);
-        return response;
+        try {
+            return jwtTokenProvider.getUsername(authHeader.substring(7));
+        } catch (JwtException | IllegalArgumentException e) {
+            // bad signature, malformed or expired token
+            throw new UnauthorizedException("Your session has expired, please login again");
+        }
     }
 }

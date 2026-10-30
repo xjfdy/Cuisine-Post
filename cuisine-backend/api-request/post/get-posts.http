@@ -1,0 +1,17 @@
+### First page, 5 per page (newest first)
+GET http://localhost:8080/api/post?pageNo=0&pageSize=5
+
+### Second page
+GET http://localhost:8080/api/post?pageNo=1&pageSize=5
+
+### Search by title (case-insensitive)
+GET http://localhost:8080/api/post?pageNo=0&pageSize=5&query=CHICKEN
+
+### Bad params are clamped -> pageNo 0, pageSize 50
+GET http://localhost:8080/api/post?pageNo=-3&pageSize=100000
+
+### One post by id (uses postId saved by create-post.http)
+GET http://localhost:8080/api/post/{{postId}}
+
+### Post doesn't exist -> 404
+GET http://localhost:8080/api/post/999999

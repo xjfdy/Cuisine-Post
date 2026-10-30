@@ -1,0 +1,14 @@
+### User B deletes user A's post -> 403
+DELETE http://localhost:8080/api/post/{{postId}}
+Authorization: Bearer {{benToken}}
+
+### No token -> 401
+DELETE http://localhost:8080/api/post/{{postId}}
+
+### User A deletes own post -> 200 "Post deleted successfully"
+DELETE http://localhost:8080/api/post/{{postId}}
+Authorization: Bearer {{annaToken}}
+
+### Delete again -> 404
+DELETE http://localhost:8080/api/post/{{postId}}
+Authorization: Bearer {{annaToken}}
